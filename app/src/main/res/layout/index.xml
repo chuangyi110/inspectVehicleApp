@@ -1,0 +1,201 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/scrollView1"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content" >
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:focusable="true"
+        android:focusableInTouchMode="true"
+        android:orientation="vertical"
+        android:gravity="top"
+        >
+
+        <TextView xmlns:android="http://schemas.android.com/apk/res/android"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="#fff"
+            android:gravity="center"
+            android:text="登录成功后的界面"
+            android:textSize="@dimen/dp_20" />
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/dp_1"
+            android:background="@color/colorPrimaryDark"/>
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/dp_30"
+            android:layout_marginLeft="@dimen/margin_large"
+            android:layout_marginRight="@dimen/margin_large">
+
+            <EditText
+                android:id="@+id/et_search"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:layout_alignParentBottom="true"
+                android:layout_alignParentStart="true"
+                android:layout_gravity="center"
+                android:background="@null"
+                android:gravity="center"
+                android:hint="请输入要查询的车辆"
+                android:maxLines="1"
+                android:textColor="@android:color/black"
+                android:textColorHint="@color/tv_gray_deep"
+                android:textSize="@dimen/text_size_large" />
+
+            <Button
+                android:id="@+id/search_button"
+                android:layout_width="@dimen/dp_62"
+                android:layout_height="@dimen/dp_30"
+                android:layout_alignParentTop="true"
+                android:layout_toEndOf="@+id/et_search"
+                android:background="@drawable/btn_orange_selector"
+                android:text="确定"
+                android:textColor="@android:color/white"
+                android:textSize="@dimen/text_size_normal" />
+            <!--
+            <ImageButton
+                android:id="@+id/img_account"
+                android:layout_width="@dimen/dp_29"
+                android:layout_height="@dimen/dp_30"
+                android:layout_alignParentEnd="true"
+                android:layout_alignParentTop="true"
+                android:layout_marginEnd="147dp"
+                android:background="@null"
+                android:scaleType="fitXY"
+                android:src="@drawable/icon_login_account" />
+            -->
+            <View
+                android:layout_width="164dp"
+                android:layout_height="2dp"
+                android:layout_alignParentBottom="true"
+                android:layout_alignParentStart="true"
+                android:background="@color/colorPrimaryDark" />
+        </RelativeLayout>
+
+        <!--按钮-->
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="481dp"
+            android:layout_marginLeft="@dimen/margin_large"
+            android:layout_marginRight="@dimen/margin_large"
+            android:layout_marginTop="@dimen/dp_1">
+
+            <Button
+                android:id="@+id/violation_button"
+                android:layout_width="127dp"
+                android:layout_height="127dp"
+
+                android:layout_alignParentStart="true"
+                android:layout_alignParentTop="true"
+                android:layout_marginStart="14dp"
+                android:layout_marginTop="12dp"
+                android:background="@drawable/btn_orange_selector"
+                android:text="违章历史查询"
+                android:textColor="@android:color/white"
+                android:textSize="@dimen/text_size_normal" />
+
+            <Button
+                android:id="@+id/historical_button"
+                android:layout_width="127dp"
+                android:layout_height="127dp"
+                android:layout_alignParentEnd="true"
+                android:layout_alignTop="@+id/violation_button"
+                android:layout_marginEnd="14dp"
+                android:background="@drawable/btn_orange_selector"
+                android:text="历史数据查询"
+                android:textColor="@android:color/white"
+                android:textSize="@dimen/text_size_normal" />
+
+            <Button
+                android:id="@+id/sign_button"
+                android:layout_width="127dp"
+                android:layout_height="127dp"
+                android:layout_alignParentTop="true"
+                android:layout_alignStart="@+id/violation_button"
+                android:layout_marginTop="154dp"
+                android:background="@drawable/btn_orange_selector"
+                android:text="签字信息采集"
+                android:textColor="@android:color/white"
+                android:textSize="@dimen/text_size_normal" />
+
+            <Button
+                android:id="@+id/obd_button"
+                android:layout_width="127dp"
+                android:layout_height="127dp"
+                android:layout_alignStart="@+id/historical_button"
+                android:layout_alignTop="@+id/sign_button"
+                android:background="@drawable/btn_orange_selector"
+                android:text="OBD数据读取"
+                android:textColor="@android:color/white"
+                android:textSize="@dimen/text_size_normal" />
+
+            <Button
+                android:id="@+id/vehicle_data_button"
+                android:layout_width="127dp"
+                android:layout_height="127dp"
+                android:layout_alignParentBottom="true"
+                android:layout_alignStart="@+id/violation_button"
+                android:layout_marginBottom="55dp"
+                android:background="@drawable/btn_orange_selector"
+                android:text="车辆数据基本数据查询"
+                android:textColor="@android:color/white"
+                android:textSize="@dimen/text_size_normal" />
+
+            <Button
+                android:id="@+id/back_reflection_button"
+                android:layout_width="127dp"
+                android:layout_height="127dp"
+                android:layout_alignStart="@+id/historical_button"
+                android:layout_alignTop="@+id/vehicle_data_button"
+                android:background="@drawable/btn_orange_selector"
+                android:text="逆反射数据读取"
+                android:textColor="@android:color/white"
+                android:textSize="@dimen/text_size_normal" />
+            <!--
+            <Button
+                android:id="@+id/b7"
+                android:layout_width="127dp"
+                android:layout_height="127dp"
+                android:layout_alignParentTop="true"
+                android:layout_alignStart="@+id/violation_button"
+                android:layout_marginTop="300dp"
+                android:background="@drawable/btn_orange_selector"
+                android:text="待添加"
+                android:textColor="@android:color/white"
+                android:textSize="@dimen/text_size_normal"
+                android:visibility="invisible" />
+
+            <Button
+                android:id="@+id/b8"
+                android:layout_width="165dp"
+                android:layout_height="165dp"
+                android:layout_alignParentEnd="true"
+                android:layout_alignTop="@+id/b7"
+                android:background="@drawable/btn_orange_selector"
+                android:text="待添加"
+                android:textColor="@android:color/white"
+                android:textSize="@dimen/text_size_normal"
+                android:visibility="invisible" />
+                -->
+        </RelativeLayout>
+
+        <Button
+            android:layout_width="match_parent"
+            android:layout_height="100dp"
+            android:text="返回登录界面"
+            android:onClick="toLogin"
+            />
+        <Button
+            android:layout_width="match_parent"
+            android:layout_height="100dp"
+            android:text="注销当前用户"
+            android:onClick="toLogin2"
+            />
+
+    </LinearLayout>
+</ScrollView>

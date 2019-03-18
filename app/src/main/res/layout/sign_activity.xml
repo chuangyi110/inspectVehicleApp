@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/scrollView1"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content" >
+    <LinearLayout
+        android:id="@+id/mainLinearLayout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:focusable="true"
+        android:focusableInTouchMode="true"
+        xmlns:app="http://schemas.android.com/apk/res-auto"
+        android:background="#fff"
+        android:orientation="vertical">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:gravity="center"
+            android:text="签字采集"
+            android:textSize="30sp" />
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/dp_1"
+            android:background="@color/colorPrimaryDark"
+            />
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="45dp"
+            android:layout_marginLeft="@dimen/margin_large"
+            android:layout_marginRight="@dimen/margin_large"
+            android:layout_marginTop="@dimen/dp_1">
+
+            <LinearLayout
+                android:id="@id/line1"
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/dp_40"
+                android:layout_alignParentStart="true"
+                android:layout_alignParentTop="true"
+                android:orientation="horizontal">
+                <!--
+                <ImageView
+                    android:layout_width="41dp"
+                    android:layout_height="match_parent"
+                    android:layout_alignParentBottom="true"
+                    android:layout_marginBottom="@dimen/margin_litter"
+                    android:layout_marginLeft="@dimen/margin_small"
+                    android:scaleType="fitXY"
+                    android:src="@drawable/icon_login_account" />
+
+                <TextView
+                    android:id="@+id/plate_numbers"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:gravity="center"
+                    android:text="辽A55B68"
+                    android:textColor="@color/black_semi_transparent"
+                    android:textSize="@dimen/dp_20" />
+                -->
+                <RelativeLayout
+                    android:layout_width="311dp"
+                    android:layout_height="@dimen/dp_30"
+                    android:layout_marginLeft="@dimen/margin_large"
+                    android:layout_marginRight="@dimen/margin_large">
+
+                    <EditText
+                        android:id="@+id/et_search"
+                        android:layout_width="104dp"
+                        android:layout_height="match_parent"
+                        android:layout_alignParentStart="true"
+                        android:layout_alignParentTop="true"
+                        android:layout_gravity="center"
+                        android:background="@null"
+                        android:gravity="center"
+                        android:hint="当前上传车辆"
+                        android:maxLines="1"
+                        android:textColor="@android:color/black"
+                        android:textColorHint="@color/tv_gray_deep"
+                        android:textSize="@dimen/text_size_small" />
+
+                    <Button
+                        android:id="@+id/bt_camera"
+                        android:layout_width="76dp"
+                        android:layout_height="@dimen/dp_30"
+                        android:layout_alignParentTop="true"
+                        android:layout_centerHorizontal="true"
+                        android:background="@drawable/btn_orange_selector"
+                        android:text="打开摄像头"
+                        android:textColor="@android:color/white"
+                        android:textSize="@dimen/text_size_normal" />
+
+                    <Button
+                        android:id="@+id/search_button"
+                        android:layout_width="62dp"
+                        android:layout_height="@dimen/dp_30"
+                        android:layout_alignParentEnd="true"
+                        android:layout_alignParentTop="true"
+                        android:background="@drawable/btn_orange_selector"
+                        android:visibility="invisible"
+                        android:text="确定"
+                        android:textColor="@android:color/white"
+                        android:textSize="@dimen/text_size_normal" />
+
+                    <View
+                        android:layout_width="164dp"
+                        android:layout_height="2dp"
+                        android:layout_alignParentBottom="true"
+                        android:layout_alignParentStart="true"
+                        android:background="@color/colorPrimaryDark" />
+                </RelativeLayout>
+            </LinearLayout>
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/dp_3"
+                android:layout_alignParentBottom="true"
+                android:layout_alignParentStart="true"
+                android:background="@color/gray" />
+        </RelativeLayout>
+
+        <ImageView
+            android:id="@+id/picture"
+            android:layout_width="match_parent"
+            android:layout_height="498dp"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginLeft="0dp" />
+        <Button
+            android:id="@+id/bt_upload"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@drawable/btn_orange_selector"
+            android:visibility="visible"
+            android:text="上传"
+            android:textColor="@android:color/white"
+            android:textSize="@dimen/text_size_normal" />
+    </LinearLayout>
+</ScrollView>
