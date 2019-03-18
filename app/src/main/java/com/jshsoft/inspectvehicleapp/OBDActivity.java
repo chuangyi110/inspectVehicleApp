@@ -207,7 +207,7 @@ public class OBDActivity extends AppCompatActivity {
                                         return;
                                     }
                                     search.setVisibility(View.GONE);
-                                    switch (status) {
+                                    switch (status){
                                         case Connect:
 
                                             title.setText("已连接：" + note);
@@ -249,27 +249,36 @@ public class OBDActivity extends AppCompatActivity {
                                             });
                                             icTitle.setImageDrawable(getResources().getDrawable(R.drawable.ic_connect_fail_24dp));
                                             break;
+
                                         case UnSearch:
+
                                             title.setText("未搜到设备，点击重试");
                                             icTitle.setImageDrawable(getResources().getDrawable(R.drawable.ic_unsearch_24dp));
                                             title.setClickable(true);
                                             title.setOnClickListener(v -> runOnUiThread(() -> {
                                                 title.setClickable(false);
-                                                if (bluetooth != null) {
+                                                if (bluetooth != null)
+                                                {
                                                     bluetooth.searchDrivces();
                                                 }
                                             }));
+
                                             break;
                                         case ReadVin:
                                             vin.setText("读取中...");
                                             break;
+
                                         case ConnectingECU:
+
                                             Log.i(TAG, "run: 尝试连接ECU");
                                             runOnUiThread(() -> title.setText("尝试连接ECU:" + note));
                                             break;
+
                                         case UncnnectECU:
+
                                             runOnUiThread(() -> title.setText("无法连接ECU:" + note));
                                             break;
+
                                         case UnConnect:
                                             runOnUiThread(() -> {
                                                 title.setText("设备断开连接");
@@ -281,7 +290,6 @@ public class OBDActivity extends AppCompatActivity {
                                 });
                             }
                         });
-
                         bluetooth.setOnTrafficDataListener(new OnTrafficDataListener() {
                             @Override
                             public void onStatusChange(String s) { }
@@ -289,6 +297,8 @@ public class OBDActivity extends AppCompatActivity {
                             @Override
                             public void onRTDData(final TrafficData data) {
                                 Field[] fields = data.getClass().getDeclaredFields();
+
+
                                 for (final Field fd : fields) {
                                     fd.setAccessible(true);
                                     if (viewMap.containsKey(fd.getName())) {
@@ -344,6 +354,7 @@ public class OBDActivity extends AppCompatActivity {
                         });
 
                         break;
+
                     case 3:
                     case 2:
                         break;
@@ -408,6 +419,7 @@ public class OBDActivity extends AppCompatActivity {
         if (exported()) {
             getMenuInflater().inflate(R.menu.obd_menu, menu);
             return true;
+
         } else {
             return super.onCreateOptionsMenu(menu);
         }
@@ -416,9 +428,11 @@ public class OBDActivity extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
+
         if (id == R.id.btn_obd_cancel) {
             setResult(RESULT_CANCELED);
             finish();
+
         } else if (id == R.id.btn_obd_ok) {
             Intent i = new Intent();
             //JSON.toJSON(obdResult);

@@ -1,16 +1,28 @@
 package com.jshsoft.inspectvehicleapp;
 
+import android.annotation.TargetApi;
+import android.app.ActivityManager;
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageInfo;
+import android.graphics.BitmapFactory;
+import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
+import android.support.annotation.NonNull;
+import android.support.v4.app.NotificationCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.text.InputType;
 import android.util.Base64;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
@@ -24,17 +36,24 @@ import android.widget.Toast;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
+import com.jshsoft.inspectvehicleapp.intercepter.RetryIntercepter;
 import com.jshsoft.inspectvehicleapp.moel.LoginForm;
+import com.jshsoft.inspectvehicleapp.util.APKVersionCodeUtils;
 import com.jshsoft.inspectvehicleapp.util.ASEUtil;
+import com.jshsoft.inspectvehicleapp.util.AppManager;
+import com.jshsoft.inspectvehicleapp.util.BaseApplication;
 import com.jshsoft.inspectvehicleapp.util.LogUtil;
 import com.jshsoft.inspectvehicleapp.util.SharedPreferencesUtils;
 import com.jshsoft.inspectvehicleapp.widget.LoadingDialog;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.ConnectException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
+import java.util.concurrent.TimeUnit;
 
 import okhttp3.Call;
 import okhttp3.Callback;
@@ -70,7 +89,73 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         initViews();
         setupEvents();
         initData();
+        //添加app进程控制
+        AppManager.getAppManager().addActivity(this);
+        //TODO 版本检查  服务器无法上传暂时注解
+         checkVersions();
+        //校验版本前无法点击登录按钮
+        setLoginBtnClickable(false);
+    }
 
+    private void checkVersions() {
+        Thread checkVersionsRunable = new Thread(){
+            @Override
+            public void run() {
+                super.run();
+                String localVersion = APKVersionCodeUtils.getVersionCode(MainActivity.this) + "";
+                LogUtil.i(TAG,"当前版本："+localVersion);
+                if(localVersion.isEmpty()){
+                    LogUtil.i(TAG,"版本校验失败请重试");
+                    showToast("版本校验失败请重试");
+                    return;
+                }
+                OkHttpClient okHttpClient = new OkHttpClient
+                        .Builder()
+                        .connectTimeout(20, TimeUnit.SECONDS)
+                        .readTimeout(20,TimeUnit.SECONDS)
+                        .addInterceptor(new RetryIntercepter(2))
+                        .build();
+                RequestBody requestBody = new FormBody.Builder()
+                        .add("localVersion", localVersion)
+                        .build();
+                Request request = new Request.Builder()
+                        .url("https://vehicle.jshsoft.com:8080/localVersion")
+                        .post(requestBody)
+                        .build();
+                okHttpClient.newCall(request).enqueue(new Callback() {
+                    @Override
+                    public void onFailure(Call call, IOException e) {
+                        if(e instanceof ConnectException){
+                            showToast("网络异常！请确认网络情况");
+                        }else{
+                            showToast(e.getMessage());
+                        }
+                        LogUtil.i(TAG,"++++++++++++++++++版本验证失败:错误原因"+e.getMessage()+"++++++++++++++++++");
+                    }
+                    @Override
+                    public void onResponse(Call call, Response response) throws IOException {
+                        String req = response.body().string();
+                        Map map = (Map)JSONObject.parse(req);
+                        String code = map.get("code")==null?"1":map.get("code").toString();
+                        System.out.println("###################"+code);
+                        if(Integer.parseInt(code)==0){
+                            setLoginBtnClickable(true);
+                            LogUtil.i(TAG,"++++++++++++++++++版本验证成功++++++++++++++++++");
+                        }else {
+                            String msg = map.get("msg")==null?"连接失败":map.get("msg").toString();
+                            showToast(msg);
+                            setLoginBtnClickable(false);
+                            LogUtil.i(TAG,"+++++++++++++++版本验证失败__失败原因:"+msg+"+++++++++++++");
+
+
+                        }
+
+                    }
+                });
+
+            }
+        };
+        checkVersionsRunable.start();
     }
 
 
@@ -92,6 +177,18 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         checkBox_login = (CheckBox)findViewById(R.id.checkBox_login);
         checkBox_password = (CheckBox)findViewById(R.id.checkBox_password);
         iv_see_password = (ImageView)findViewById(R.id.iv_see_password);
+        //创建通知栏
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            String channelId = "channel_chat";
+            String channelName = "新消息";
+            int importance = NotificationManager.IMPORTANCE_HIGH;
+            NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+            NotificationChannel channel = new NotificationChannel(channelId, channelName, importance);
+            notificationManager.createNotificationChannel(channel);
+        }
+        //添加试错次数
+        SharedPreferencesUtils helper =new SharedPreferencesUtils(this,"setting");
+        helper.putValues(new SharedPreferencesUtils.ContextValue("loginTime",0));
     }
     /**
      * 添加监听事件
@@ -138,6 +235,19 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
         if(getPassword().isEmpty()){
             showToast("您输入的密码为空");
+            SharedPreferencesUtils helper = new SharedPreferencesUtils(MainActivity.this,"setting");
+            int i = helper.getInt("loginTime");
+            if(i<=10){
+                i++;
+                helper.putValues(new SharedPreferencesUtils.ContextValue("loginTime",i));
+                showToast("登录错误"+i+"次");
+            }else {
+                setLoginBtnClickable(false);
+                showToast("登录异常锁定账号");
+                lockUser();
+            }
+
+
             return;
         }
         //登陆一般都是请求服务器来判断密码是否正确，要请求网络，要子线程
@@ -145,6 +255,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         Thread loginRunable = new Thread(){
             @Override
             public void run() {
+
                 super.run();
                 setLoginBtnClickable(false);//点击登陆按钮后，设置登陆按钮不可点击
                 //网络连接
@@ -176,18 +287,17 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 okHttpClient.newCall(request).enqueue(new Callback() {
                     @Override
                     public void onFailure(Call call, IOException e) {
-                        Log.d(TAG, "onFailure: " + e);
-                    }
+                        if(e instanceof ConnectException){
+                            showToast("网络异常！请确认网络情况");
+                        }else{
+                            showToast(e.getMessage());
+                        }
+                        LogUtil.i(TAG,"++++++++++++++++++查询失败:错误原因"+e.getMessage()+"++++++++++++++++++");
 
+                    }
                     @Override
                     public void onResponse(Call call, Response response) throws IOException {
-                        Log.d(TAG, response.protocol() + " " +response.code() + " " + response.message());
-                        Headers headers = response.headers();
-                        for (int i = 0; i < headers.size(); i++) {
-                            Log.d(TAG, headers.name(i) + ":" + headers.value(i));
-                        }
                         String req = response.body().string();
-                        Log.d(TAG, "onResponse: " + req);
                         try{
                             Map map = (Map)JSONObject.parse(req);
                             if(Integer.parseInt(map.get("code").toString())==0){
@@ -195,7 +305,19 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                 startActivity(new Intent(MainActivity.this, IndexActivity.class).putExtra("username",username));
                                 finish();//关闭页面
                             }else {
-                                showToast(map.get("msg").toString());
+                                String msg = map.get("msg").toString();
+                                LogUtil.i(TAG,"[账号:"+username+"]+++++++++++++++验证失败__失败原因:"+msg+"+++++++++++++");
+                                SharedPreferencesUtils helper = new SharedPreferencesUtils(MainActivity.this,"setting");
+                                int i = helper.getInt("loginTime");
+                                i++;
+                                if(i<=10){
+                                    helper.putValues(new SharedPreferencesUtils.ContextValue("loginTime",i));
+                                    showToast("登录错误"+i+"次");
+                                }else {
+                                    setLoginBtnClickable(false);
+                                    showToast("登录异常锁定账号");
+                                    lockUser();
+                                }
                             }
                         }catch (Exception e){
 
@@ -350,6 +472,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public void onClick(View view) {
         switch (view.getId()){
             case R.id.btn_login:
+
                 loadUserName();
                 login();
 
@@ -416,6 +539,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }else{
             finish();
         }
+        //显示通知
+        showNotification();
+        //结束进程
+        AppManager.getAppManager().AppExit(this);
     }
 
     /**
@@ -427,8 +554,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             mLoadingDialog.cancel();
             mLoadingDialog = null;
         }
+
         super.onDestroy();
     }
+
+
     /**
      * 获取点击事件
      */
@@ -470,4 +600,70 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             manager.hideSoftInputFromWindow(token, InputMethodManager.HIDE_NOT_ALWAYS);
         }
     }
+    /*
+     * 简单的发送通知
+     */
+    private void showNotification() {
+        String channelId = "channel_chat";
+        Log.i(TAG,"this.is.channel");
+        NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        Notification notification = new NotificationCompat.Builder(this, channelId)
+                .setSmallIcon(R.drawable.icon_see_pass)
+                .setContentTitle("检车宝")
+                .setContentText("程序后台运行")
+                .build();
+        int i = 1;
+        notificationManager.notify(i++, notification);
+    }
+    //锁定账号
+    private void lockUser(){
+        Thread lockUserRunable = new Thread() {
+            @Override
+            public void run() {
+                super.run();
+                OkHttpClient okHttpClient = new OkHttpClient();
+                RequestBody requestBody = new FormBody.Builder()
+                        .add("status", "1")
+                        .build();
+                Request request = new Request.Builder()
+                        .url("https://vehicle.jshsoft.com:8080/user/lock")
+                        .post(requestBody)
+                        .build();
+                okHttpClient.newCall(request).enqueue(new Callback() {
+                    @Override
+                    public void onFailure(Call call, IOException e) {
+                        if(e instanceof ConnectException){
+                            showToast("网络异常！请确认网络情况");
+                        }else{
+                            showToast(e.getMessage());
+                        }
+                        LogUtil.i(TAG, "++++++++++++++++++用户锁定失败:错误原因" + e.getMessage() + "++++++++++++++++++");
+
+                    }
+
+                    @Override
+                    public void onResponse(Call call, Response response) throws IOException {
+                        String req = response.body().string();
+                        try {
+                            Map map = (Map) JSONObject.parse(req);
+                            if (Integer.parseInt(map.get("code").toString()) == 0) {
+                                LogUtil.i(TAG, "++++++++++++++++++用户验证成功++++++++++++++++++");
+                            } else {
+                                String msg = map.get("msg").toString();
+                                LogUtil.i(TAG, "+++++++++++++++用户锁定失败__失败原因:" + msg + "+++++++++++++");
+                                showToast(msg);
+                                AppManager.getAppManager().AppExit(MainActivity.this);
+                            }
+                        } catch (Exception e) {
+
+                        }
+                    }
+                });
+            }
+        };
+        lockUserRunable.start();
+    }
+
+
+
 }

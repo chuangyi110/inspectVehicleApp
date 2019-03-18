@@ -86,21 +86,27 @@ public class IndexActivity extends Activity implements View.OnClickListener{
     public void onClick(View view) {
         switch (view.getId()){
             case R.id.violation_button:
+                LogUtil.i(TAG,"[账号:"+username+"]"+"++++++++++++++++++跳转违章查询页面++++++++++++++++++");
                 startActivity(IndexActivity.this, ViolationActivity.class,getSearch());
                 break;
             case R.id.historical_button:
+                LogUtil.i(TAG,"[账号:"+username+"]"+"++++++++++++++++++跳转历史记录查询页面++++++++++++++++++");
                 startActivity(IndexActivity.this, HistoricalActivity.class,getSearch());
                 break;
             case R.id.vehicle_data_button:
+                LogUtil.i(TAG,"[账号:"+username+"]"+"++++++++++++++++++跳转违章查询页面++++++++++++++++++");
                 startActivity(IndexActivity.this, VehicleDataActivity.class,getSearch());
                 break;
             case R.id.sign_button:
+                LogUtil.i(TAG,"[账号:"+username+"]"+"++++++++++++++++++跳转签名保存页面++++++++++++++++++");
                 startActivity(IndexActivity.this,SignActivity.class,getSearch());
                 break;
             case R.id.obd_button:
+                LogUtil.i(TAG,"[账号:"+username+"]"+"++++++++++++++++++跳转OBD页面++++++++++++++++++");
                 startActivity(IndexActivity.this, OBDActivity.class,getSearch());
                 break;
             case R.id.back_reflection_button:
+                LogUtil.i(TAG,"[账号:"+username+"]"+"++++++++++++++++++跳转逆反射页面++++++++++++++++++");
                 startActivity(IndexActivity.this, BackReflectionActivity.class,getSearch());
                 break;
 //            case R.id.b7:

@@ -98,7 +98,7 @@
                         android:layout_alignParentStart="true"
                         android:background="@color/orange_light" />
                 </RelativeLayout>
-
+                <!--
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="match_parent"
@@ -123,7 +123,9 @@
                     android:text="条违章数据"
                     android:textColor="@color/black_semi_transparent"
                     android:textSize="@dimen/dp_12" />
+             -->
             </LinearLayout>
+
 
             <View
                 android:layout_width="match_parent"

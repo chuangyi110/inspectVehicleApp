@@ -31,10 +31,12 @@ import com.bin.david.form.listener.OnColumnItemClickListener;
 import com.bin.david.form.utils.DensityUtils;
 import com.jshsoft.inspectvehicleapp.moel.Item;
 import com.jshsoft.inspectvehicleapp.moel.ViolationInformationEntity;
+import com.jshsoft.inspectvehicleapp.util.LogUtil;
 import com.jshsoft.inspectvehicleapp.util.SharedPreferencesUtils;
 import com.jshsoft.inspectvehicleapp.widget.LoadingDialog;
 
 import java.io.IOException;
+import java.net.ConnectException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -120,29 +122,32 @@ public class HistoricalActivity extends Activity implements View.OnClickListener
                         .url("https://vehicle.jshsoft.com:8080/h")
                         .post(requestBody)
                         .build();
-
+                LogUtil.i(TAG,"++++++++++++++++++进行查询,查询参数:"+plateNumber+"++++++++++++++++++");
                 okHttpClient.newCall(request).enqueue(new Callback() {
                     @Override
                     public void onFailure(Call call, IOException e) {
-                        Log.d(TAG, "onFailure: " + e);
+                        if(e instanceof ConnectException){
+                            showToast("网络异常！请确认网络情况");
+                        }else{
+                            showToast(e.getMessage());
+                        }
+                        LogUtil.i(TAG,"++++++++++++++++++查询失败:错误原因"+e.getMessage()+"++++++++++++++++++");
                     }
 
                     @Override
                     public void onResponse(Call call, Response response) throws IOException {
                         Log.d(TAG, response.protocol() + " " +response.code() + " " + response.message());
                         Headers headers = response.headers();
-                        for (int i = 0; i < headers.size(); i++) {
-                            Log.d(TAG, headers.name(i) + ":" + headers.value(i));
-                        }
+//                        for (int i = 0; i < headers.size(); i++) {
+//                            Log.d(TAG, headers.name(i) + ":" + headers.value(i));
+//                        }
                         String req = response.body().string();
-                        Log.d(TAG, "onResponse: " + req);
+                        LogUtil.i(TAG, "++++++++++++++++++查询成功:返回数据为："+req+"++++++++++++++++++");
                         try{
                             Map map = (Map) JSONObject.parse(req);
                             if(Integer.parseInt(map.get("code").toString())==0){
                                 String data = map.get("obj").toString();
-                                //System.out.println(data);
                                 List<Item> list = JSON.parseArray(data,Item.class);
-                                //System.out.println(list);
                                 processingData(list);
                             }else {
                                 showToast(map.get("msg").toString());
@@ -172,6 +177,13 @@ public class HistoricalActivity extends Activity implements View.OnClickListener
             }
         };
         historicalRunable.start();
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        LogUtil.init(this);
+        LogUtil.i(TAG,"++++++++++++++++++进入历史查询页面++++++++++++++++++");
     }
 
     /**

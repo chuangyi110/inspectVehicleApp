@@ -25,10 +25,12 @@ import android.widget.ImageView;
 import android.widget.Toast;
 
 import com.alibaba.fastjson.JSONObject;
+import com.jshsoft.inspectvehicleapp.util.LogUtil;
 import com.jshsoft.inspectvehicleapp.widget.LoadingDialog;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.ConnectException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Map;
@@ -262,17 +264,18 @@ public class SignActivity extends Activity implements OnClickListener{
         client.newCall(request).enqueue(new Callback() {
             @Override
             public void onFailure(Call call, IOException e) {
-                Log.d(TAG, "onFailure: " + e.getMessage());
+                if(e instanceof ConnectException){
+                    showToast("网络异常！请确认网络情况");
+                }else{
+                    showToast(e.getMessage());
+                }
+                LogUtil.i(TAG, "++++++++++++++++++上传失败:错误原因" + e.getMessage() + "++++++++++++++++++");
             }
             @Override
             public void onResponse(Call call, Response response) throws IOException {
-                Log.d(TAG, response.protocol() + " " +response.code() + " " + response.message());
-                Headers headers = response.headers();
-                for (int i = 0; i < headers.size(); i++) {
-                    Log.d(TAG, headers.name(i) + ":" + headers.value(i));
-                }
                 String req = response.body().string();
                 Map map = (Map) JSONObject.parse(req);
+                LogUtil.i(TAG, "++++++++++++++++++上传成功" + map.get("msg") + "++++++++++++++++++");
                 showToast(map.get("msg").toString());
 
             }

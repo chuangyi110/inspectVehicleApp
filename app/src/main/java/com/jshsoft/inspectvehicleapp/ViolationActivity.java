@@ -22,9 +22,11 @@ import android.widget.Toast;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.jshsoft.inspectvehicleapp.moel.ViolationInformationEntity;
+import com.jshsoft.inspectvehicleapp.util.LogUtil;
 import com.jshsoft.inspectvehicleapp.widget.LoadingDialog;
 
 import java.io.IOException;
+import java.net.ConnectException;
 import java.util.List;
 import java.util.Map;
 
@@ -106,7 +108,12 @@ public class ViolationActivity extends Activity implements View.OnClickListener{
                 okHttpClient.newCall(request).enqueue(new Callback() {
                     @Override
                     public void onFailure(Call call, IOException e) {
-                        Log.d(TAG, "onFailure: " + e);
+                        if(e instanceof ConnectException){
+                            showToast("网络异常！请确认网络情况");
+                        }else{
+                            showToast(e.getMessage());
+                        }
+                        LogUtil.i(TAG, "++++++++++++++++++查询违章信息失败:错误原因" + e.getMessage() + "++++++++++++++++++");
                     }
 
                     @Override
@@ -121,14 +128,14 @@ public class ViolationActivity extends Activity implements View.OnClickListener{
                         try{
                             Map map = (Map) JSONObject.parse(req);
                             if(Integer.parseInt(map.get("code").toString())==0){
-                                System.out.println(map.get("wfjl").toString());
+                                LogUtil.i(TAG, "++++++++++++++++++查询违章信息成功返回信息：" +map.get("wfjl").toString()  + "++++++++++++++++++");
                                 data = map.get("wfjl").toString();
                                 handler.post(runnableUi);
                             }else {
                                 setSearchBtnClickable(true);
                                 hideLoding();
+                                LogUtil.i(TAG, "++++++++++++++++++查询违章信息失败返回信息++++++++++++++++++");
                                 showToast(map.get("msg").toString());
-
                             }
                         }catch (Exception e){
                             e.printStackTrace();

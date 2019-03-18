@@ -32,9 +32,11 @@ import com.bin.david.form.utils.DensityUtils;
 import com.jshsoft.inspectvehicleapp.moel.Item;
 import com.jshsoft.inspectvehicleapp.moel.VehicleData;
 import com.jshsoft.inspectvehicleapp.moel.VehicleTableModel;
+import com.jshsoft.inspectvehicleapp.util.LogUtil;
 import com.jshsoft.inspectvehicleapp.widget.LoadingDialog;
 
 import java.io.IOException;
+import java.net.ConnectException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -115,7 +117,12 @@ public class VehicleDataActivity extends Activity implements View.OnClickListene
                 okHttpClient.newCall(request).enqueue(new Callback() {
                     @Override
                     public void onFailure(Call call, IOException e) {
-                        Log.d(TAG, "onFailure: " + e);
+                        if(e instanceof ConnectException){
+                            showToast("网络异常！请确认网络情况");
+                        }else{
+                            showToast(e.getMessage());
+                        }
+                        LogUtil.i(TAG, "++++++++++++++++++查询历史信息失败:错误原因" + e.getMessage() + "++++++++++++++++++");
                     }
 
                     @Override
@@ -133,9 +140,9 @@ public class VehicleDataActivity extends Activity implements View.OnClickListene
                                 String data = map.get("obj").toString();
                                 System.out.println(data);
                                 List<VehicleTableModel> list = JSON.parseArray(data,VehicleTableModel.class);
-                                System.out.println(list);
-                                processingData(list);
+                                LogUtil.i(TAG, "++++++++++++++++++查询历史信息成功返回数据" + list + "++++++++++++++++++");                                processingData(list);
                             }else {
+                                LogUtil.i(TAG, "++++++++++++++++++查询历史信息失败++++++++++++++++++");
                                 showToast(map.get("msg").toString());
                             }
                         }catch (Exception e){
