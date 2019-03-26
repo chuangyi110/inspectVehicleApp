@@ -6,8 +6,10 @@ android {
         applicationId "com.jshsoft.inspectvehicleapp"
         minSdkVersion 23
         targetSdkVersion 28
-        versionCode 1
-        versionName "1"
+        versionCode 101021
+        versionName "1.01.021"
+//        versionCode 1
+//        versionName "1"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
     buildTypes {

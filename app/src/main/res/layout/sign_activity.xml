@@ -13,7 +13,15 @@
         xmlns:app="http://schemas.android.com/apk/res-auto"
         android:background="#fff"
         android:orientation="vertical">
-
+        <TextView
+            android:id="@+id/warning"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="#FEC7DE"
+            android:padding="10dp"
+            android:textColor="#000"
+            android:text="网络不给力,请检查网络设置。"
+            android:visibility="gone"/>
         <TextView
             android:layout_width="match_parent"
             android:layout_height="50dp"

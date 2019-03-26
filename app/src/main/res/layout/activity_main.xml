@@ -6,6 +6,16 @@
     android:background="#fff"
     android:orientation="vertical">
 
+
+    <TextView
+        android:id="@+id/warning"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="#FEC7DE"
+        android:padding="10dp"
+        android:textColor="#000"
+        android:text="网络不给力,请检查网络设置。"
+        android:visibility="gone"/>
     <TextView
         android:layout_width="match_parent"
         android:layout_height="50dp"
@@ -16,6 +26,11 @@
     <View android:layout_width="match_parent" android:layout_height="@dimen/dp_1"
         android:background="@color/orange_main"
         />
+    <Button
+        android:id="@+id/state"
+        android:layout_width="wrap_content"
+        android:layout_height="36dp"
+        android:text="开机自启" />
 
     <RelativeLayout
         android:layout_width="match_parent"
@@ -154,4 +169,5 @@
         android:background="@drawable/btn_orange_selector"
         android:textColor="@android:color/white"
         android:textSize="@dimen/text_size_normal"/>
+
 </LinearLayout>

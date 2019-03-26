@@ -1,36 +1,27 @@
 package com.jshsoft.inspectvehicleapp;
 
-import android.annotation.TargetApi;
-import android.app.ActivityManager;
-import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
-import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
-import android.content.pm.PackageInfo;
-import android.graphics.BitmapFactory;
+
+
 import android.os.Build;
-import android.os.Handler;
-import android.os.IBinder;
-import android.os.Message;
-import android.support.annotation.NonNull;
-import android.support.v4.app.NotificationCompat;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.text.InputType;
 import android.util.Base64;
+
 import android.util.Log;
-import android.view.KeyEvent;
-import android.view.MotionEvent;
 import android.view.View;
-import android.view.inputmethod.InputMethodManager;
+
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 
@@ -39,26 +30,23 @@ import com.alibaba.fastjson.JSONObject;
 import com.jshsoft.inspectvehicleapp.intercepter.RetryIntercepter;
 import com.jshsoft.inspectvehicleapp.moel.LoginForm;
 import com.jshsoft.inspectvehicleapp.util.APKVersionCodeUtils;
-import com.jshsoft.inspectvehicleapp.util.ASEUtil;
 import com.jshsoft.inspectvehicleapp.util.AppManager;
-import com.jshsoft.inspectvehicleapp.util.BaseApplication;
 import com.jshsoft.inspectvehicleapp.util.LogUtil;
 import com.jshsoft.inspectvehicleapp.util.SharedPreferencesUtils;
-import com.jshsoft.inspectvehicleapp.widget.LoadingDialog;
 
-import java.io.File;
+
+
 import java.io.IOException;
 import java.net.ConnectException;
-import java.util.ArrayList;
-import java.util.List;
+
+
 import java.util.Map;
-import java.util.Random;
+
 import java.util.concurrent.TimeUnit;
 
 import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.FormBody;
-import okhttp3.Headers;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
@@ -68,33 +56,43 @@ import okhttp3.Response;
  * 登陆页面
  *
  */
-public class MainActivity extends AppCompatActivity implements View.OnClickListener,CompoundButton.OnCheckedChangeListener{
+public class MainActivity extends BaseActivity implements View.OnClickListener,CompoundButton.OnCheckedChangeListener{
 
     private static final String TAG = "MainActivity";
     //布局内的控件
     private EditText et_name;
     private EditText et_password;
-    private Button mLoginBtn;
+    //private Button mLoginBtn;
+    //public TextView mTv;
     private CheckBox checkBox_password;
     private CheckBox checkBox_login;
     private ImageView iv_see_password;
-    private LoadingDialog mLoadingDialog;
-
-
-
+    private Button bt_state;
+    boolean netConnect;
+    public void setTAG(){
+        super.setTAG("MainActivity");
+    }
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        LogUtil.init(this);
+        LogUtil.i(TAG,"++++++++++++++++++开启软件++++++++++++++++++");
+
         initViews();
         setupEvents();
+        SharedPreferencesUtils helper= new SharedPreferencesUtils(this,"setting");
+        int stateNum = helper.getInt("state");
+        if(stateNum==20){
+            bt_state.setText("开机自启");
+        }else{
+            bt_state.setText("关闭开机自启");
+        }
         initData();
         //添加app进程控制
         AppManager.getAppManager().addActivity(this);
-        //TODO 版本检查  服务器无法上传暂时注解
-         checkVersions();
-        //校验版本前无法点击登录按钮
-        setLoginBtnClickable(false);
+        checkVersions();
+
     }
 
     private void checkVersions() {
@@ -103,17 +101,17 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             public void run() {
                 super.run();
                 String localVersion = APKVersionCodeUtils.getVersionCode(MainActivity.this) + "";
-                LogUtil.i(TAG,"当前版本："+localVersion);
+                LogUtil.i(TAG,"当前版本++++++++++++++++++++++++++："+localVersion);
                 if(localVersion.isEmpty()){
                     LogUtil.i(TAG,"版本校验失败请重试");
-                    showToast("版本校验失败请重试");
+                    showToast(MainActivity.this,"版本校验失败请重试");
                     return;
                 }
                 OkHttpClient okHttpClient = new OkHttpClient
                         .Builder()
                         .connectTimeout(20, TimeUnit.SECONDS)
                         .readTimeout(20,TimeUnit.SECONDS)
-                        .addInterceptor(new RetryIntercepter(2))
+                        .addInterceptor(new RetryIntercepter(2,MainActivity.this))
                         .build();
                 RequestBody requestBody = new FormBody.Builder()
                         .add("localVersion", localVersion)
@@ -126,24 +124,24 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     @Override
                     public void onFailure(Call call, IOException e) {
                         if(e instanceof ConnectException){
-                            showToast("网络异常！请确认网络情况");
+                            showToast(MainActivity.this,"网络异常！请确认网络情况");
                         }else{
-                            showToast(e.getMessage());
+                            showToast(MainActivity.this,e.getMessage());
                         }
-                        LogUtil.i(TAG,"++++++++++++++++++版本验证失败:错误原因"+e.getMessage()+"++++++++++++++++++");
+                        LogUtil.i(TAG,"++++++++++++++++++版本验证失败:错误原因"+e.getMessage()+",当前版本"+localVersion+"++++++++++++++++++");
                     }
                     @Override
                     public void onResponse(Call call, Response response) throws IOException {
                         String req = response.body().string();
                         Map map = (Map)JSONObject.parse(req);
                         String code = map.get("code")==null?"1":map.get("code").toString();
-                        System.out.println("###################"+code);
+                        //System.out.println("###################"+code);
                         if(Integer.parseInt(code)==0){
                             setLoginBtnClickable(true);
                             LogUtil.i(TAG,"++++++++++++++++++版本验证成功++++++++++++++++++");
                         }else {
                             String msg = map.get("msg")==null?"连接失败":map.get("msg").toString();
-                            showToast(msg);
+                            showToast(MainActivity.this,msg);
                             setLoginBtnClickable(false);
                             LogUtil.i(TAG,"+++++++++++++++版本验证失败__失败原因:"+msg+"+++++++++++++");
 
@@ -159,24 +157,21 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
 
-    @Override
-    protected void onStart() {
-        super.onStart();
-        LogUtil.init(this);
-        LogUtil.i(TAG,"++++++++++++++++++开启软件++++++++++++++++++");
-    }
+
 
     /**
      * 初始化视图组件
      */
     private void initViews() {
-
+        setTAG();
         mLoginBtn = (Button)findViewById(R.id.btn_login);
         et_name  = (EditText)findViewById(R.id.et_account);
         et_password = (EditText)findViewById(R.id.et_password);
         checkBox_login = (CheckBox)findViewById(R.id.checkBox_login);
         checkBox_password = (CheckBox)findViewById(R.id.checkBox_password);
         iv_see_password = (ImageView)findViewById(R.id.iv_see_password);
+        mTv= (TextView) findViewById(R.id.warning);
+        bt_state = (Button)findViewById(R.id.state);
         //创建通知栏
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             String channelId = "channel_chat";
@@ -198,12 +193,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         checkBox_password.setOnCheckedChangeListener(this);
         checkBox_login.setOnCheckedChangeListener(this);
         iv_see_password.setOnClickListener(this);
+        bt_state.setOnClickListener(this);
     }
 
     /**
      * 初始执行
      */
-    private void initData(){
+    private void initData() {
         //判断用户第一次登陆
         if(firstLogin()){
             //取消记住密码和自动登陆复选框
@@ -222,7 +218,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             checkBox_login.setChecked(true);
             login();
         }
+        //校验版本前无法点击登录按钮
+        setLoginBtnClickable(false);
+        checkNetWork();
+
     }
+
+
 
     /**
      * 登陆
@@ -230,20 +232,20 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private void login() {
         //判断账号密码是否为空
         if(getAccount().isEmpty()){
-            showToast("你输入的账号为空");
+            showToast(this,"你输入的账号为空");
             return;
         }
         if(getPassword().isEmpty()){
-            showToast("您输入的密码为空");
+            showToast(this,"您输入的密码为空");
             SharedPreferencesUtils helper = new SharedPreferencesUtils(MainActivity.this,"setting");
             int i = helper.getInt("loginTime");
             if(i<=10){
                 i++;
                 helper.putValues(new SharedPreferencesUtils.ContextValue("loginTime",i));
-                showToast("登录错误"+i+"次");
+                showToast(this,"登录错误"+i+"次");
             }else {
                 setLoginBtnClickable(false);
-                showToast("登录异常锁定账号");
+                showToast(this,"登录异常锁定账号");
                 lockUser();
             }
 
@@ -255,25 +257,24 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         Thread loginRunable = new Thread(){
             @Override
             public void run() {
-
                 super.run();
                 setLoginBtnClickable(false);//点击登陆按钮后，设置登陆按钮不可点击
                 //网络连接
-                String username = getAccount();
-                String pwd = getPassword();
-                String captcha = "jjj";
-                String uuid ="ttt";
-                LoginForm lf = new LoginForm();
-                lf.setCaptcha(captcha);
-                lf.setPassword(pwd);
-                lf.setUsername(username);
-                lf.setUuid(uuid);
+                String username = getAccount(),pwd = getPassword(),captcha = "jjj",uuid ="ttt";
+                pwd = new String(Base64.encode(pwd.getBytes(),Base64.DEFAULT)).trim();
+                System.out.println("pwd:"+pwd);
+                LoginForm lf = new LoginForm(username,pwd,captcha,uuid);
                 String json = JSON.toJSONString(lf);
                 String timestamp = Long.toString(System.currentTimeMillis());
                 String url = "login";
                 String transport =new String(Base64.encode(json.getBytes(),Base64.DEFAULT));
                 LogUtil.i(TAG,"timestamp="+timestamp+",transport="+transport);
-                OkHttpClient okHttpClient = new OkHttpClient();
+                OkHttpClient okHttpClient = new OkHttpClient
+                        .Builder()
+                        .connectTimeout(20, TimeUnit.SECONDS)
+                        .readTimeout(20,TimeUnit.SECONDS)
+                        .addInterceptor(new RetryIntercepter(2,MainActivity.this))
+                        .build();
                 RequestBody requestBody = new FormBody.Builder()
                         .add("transport", transport)
                         .add("url", url)
@@ -288,9 +289,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     @Override
                     public void onFailure(Call call, IOException e) {
                         if(e instanceof ConnectException){
-                            showToast("网络异常！请确认网络情况");
+                            showToast(MainActivity.this,"网络异常！请确认网络情况");
                         }else{
-                            showToast(e.getMessage());
+                            showToast(MainActivity.this,e.getMessage());
                         }
                         LogUtil.i(TAG,"++++++++++++++++++查询失败:错误原因"+e.getMessage()+"++++++++++++++++++");
 
@@ -303,7 +304,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                             if(Integer.parseInt(map.get("code").toString())==0){
                                 LogUtil.i(TAG,"[账号:"+username+"]"+"++++++++++++++++++验证成功++++++++++++++++++");
                                 startActivity(new Intent(MainActivity.this, IndexActivity.class).putExtra("username",username));
-                                finish();//关闭页面
+                                //finish();//关闭页面
                             }else {
                                 String msg = map.get("msg").toString();
                                 LogUtil.i(TAG,"[账号:"+username+"]+++++++++++++++验证失败__失败原因:"+msg+"+++++++++++++");
@@ -312,10 +313,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                 i++;
                                 if(i<=10){
                                     helper.putValues(new SharedPreferencesUtils.ContextValue("loginTime",i));
-                                    showToast("登录错误"+i+"次");
+                                    showToast(MainActivity.this,"登录错误"+i+"次");
                                 }else {
                                     setLoginBtnClickable(false);
-                                    showToast("登录异常锁定账号");
+                                    showToast(MainActivity.this,"登录异常锁定账号");
                                     lockUser();
                                 }
                             }
@@ -363,31 +364,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public void setLoginBtnClickable(boolean clickable){
         mLoginBtn.setClickable(clickable);
     }
-
-    /**
-     * 显示加载的进度条
-     */
-    private void showLoading() {
-        if(mLoadingDialog ==null){
-            mLoadingDialog = new LoadingDialog(this,getString(R.string.loading),false);
-        }
-        mLoadingDialog.show();
-    }
-
-    /**
-     * 吟唱加载中的进度条
-     */
-    private void hideLoding() {
-        if(mLoadingDialog!=null){
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    mLoadingDialog.hide();
-                }
-            });
-        }
-    }
-
 
     /**
      * 获取账号
@@ -458,15 +434,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         boolean remenberPassword = helper.getBoolean("remenberPassword",false);
         return remenberPassword;
     }
-    //消息框
-    private void showToast(final String message) {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                Toast.makeText(MainActivity.this,message,Toast.LENGTH_SHORT).show();
-            }
-        });
-    }
+
 
     @Override
     public void onClick(View view) {
@@ -480,6 +448,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             case R.id.iv_see_password:
                 setPasswordVisibility();
                 break;
+            case R.id.state:
+                SharedPreferencesUtils  helper = new SharedPreferencesUtils(this,"setting");
+
+                if(bt_state.getText().equals("开机自启")) {
+                    helper.putValues(new SharedPreferencesUtils.ContextValue("state",10));
+                    bt_state.setText("关闭开机自启");
+                }else{
+                    helper.putValues(new SharedPreferencesUtils.ContextValue("state",20));
+                    bt_state.setText("开机自启");
+                }
         }
 
     }
@@ -527,7 +505,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     /**
      *  监听回退键
      */
-
     @Override
     public void onBackPressed() {
         if(mLoadingDialog!=null){
@@ -539,91 +516,27 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }else{
             finish();
         }
-        //显示通知
-        showNotification();
         //结束进程
         AppManager.getAppManager().AppExit(this);
     }
 
-    /**
-     * 页面销毁前回调方法
-     */
-    @Override
-    protected void onDestroy() {
-        if(mLoadingDialog!=null){
-            mLoadingDialog.cancel();
-            mLoadingDialog = null;
-        }
 
-        super.onDestroy();
-    }
-
-
-    /**
-     * 获取点击事件
-     */
-    @Override
-    public boolean dispatchTouchEvent(MotionEvent ev) {
-        if (ev.getAction() == MotionEvent.ACTION_DOWN) {
-            View view = getCurrentFocus();
-            if (isHideInput(view, ev)) {
-                HideSoftInput(view.getWindowToken());
-                view.clearFocus();
-            }
-        }
-        return super.dispatchTouchEvent(ev);
-    }
-
-    /**
-     * 判定是否需要隐藏
-     */
-    private boolean isHideInput(View v, MotionEvent ev) {
-        if (v != null && (v instanceof EditText)) {
-            int[] l = {0, 0};
-            v.getLocationInWindow(l);
-            int left = l[0], top = l[1], bottom = top + v.getHeight(), right = left + v.getWidth();
-            if (ev.getX() > left && ev.getX() < right && ev.getY() > top && ev.getY() < bottom) {
-                return false;
-            } else {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    /**
-     * 隐藏软键盘
-     */
-    private void HideSoftInput(IBinder token) {
-        if (token != null) {
-            InputMethodManager manager = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
-            manager.hideSoftInputFromWindow(token, InputMethodManager.HIDE_NOT_ALWAYS);
-        }
-    }
-    /*
-     * 简单的发送通知
-     */
-    private void showNotification() {
-        String channelId = "channel_chat";
-        Log.i(TAG,"this.is.channel");
-        NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-        Notification notification = new NotificationCompat.Builder(this, channelId)
-                .setSmallIcon(R.drawable.icon_see_pass)
-                .setContentTitle("检车宝")
-                .setContentText("程序后台运行")
-                .build();
-        int i = 1;
-        notificationManager.notify(i++, notification);
-    }
     //锁定账号
     private void lockUser(){
         Thread lockUserRunable = new Thread() {
             @Override
             public void run() {
                 super.run();
-                OkHttpClient okHttpClient = new OkHttpClient();
+
+                OkHttpClient okHttpClient = new OkHttpClient
+                        .Builder()
+                        .connectTimeout(20, TimeUnit.SECONDS)
+                        .readTimeout(20,TimeUnit.SECONDS)
+                        .addInterceptor(new RetryIntercepter(2,MainActivity.this))
+                        .build();
                 RequestBody requestBody = new FormBody.Builder()
                         .add("status", "1")
+                        .add("username",getAccount())
                         .build();
                 Request request = new Request.Builder()
                         .url("https://vehicle.jshsoft.com:8080/user/lock")
@@ -633,9 +546,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     @Override
                     public void onFailure(Call call, IOException e) {
                         if(e instanceof ConnectException){
-                            showToast("网络异常！请确认网络情况");
+                            showToast(MainActivity.this,"网络异常！请确认网络情况");
                         }else{
-                            showToast(e.getMessage());
+                            showToast(MainActivity.this,e.getMessage());
                         }
                         LogUtil.i(TAG, "++++++++++++++++++用户锁定失败:错误原因" + e.getMessage() + "++++++++++++++++++");
 
@@ -651,7 +564,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                             } else {
                                 String msg = map.get("msg").toString();
                                 LogUtil.i(TAG, "+++++++++++++++用户锁定失败__失败原因:" + msg + "+++++++++++++");
-                                showToast(msg);
+                                showToast(MainActivity.this,msg);
                                 AppManager.getAppManager().AppExit(MainActivity.this);
                             }
                         } catch (Exception e) {
@@ -663,7 +576,4 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         };
         lockUserRunable.start();
     }
-
-
-
 }

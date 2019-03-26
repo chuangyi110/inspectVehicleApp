@@ -22,9 +22,11 @@ import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.alibaba.fastjson.JSONObject;
+import com.jshsoft.inspectvehicleapp.intercepter.RetryIntercepter;
 import com.jshsoft.inspectvehicleapp.util.LogUtil;
 import com.jshsoft.inspectvehicleapp.widget.LoadingDialog;
 
@@ -34,6 +36,7 @@ import java.net.ConnectException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import okhttp3.Call;
 import okhttp3.Callback;
@@ -45,7 +48,7 @@ import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 
-public class SignActivity extends Activity implements OnClickListener{
+public class SignActivity extends BaseActivity implements OnClickListener{
     public static final int PHOTO_REQUEST_CAREMA = 1;// 拍照
     public static final int CROP_PHOTO = 2;
     public static final int ALBUM_RESULT_CODE = 3;
@@ -60,6 +63,9 @@ public class SignActivity extends Activity implements OnClickListener{
     private Bitmap bitmap;
     private Canvas mCanvas;
     private LoadingDialog mLoadingDialog;
+    public void setTAG(){
+        super.setTAG("SignActivity");
+    }
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -72,10 +78,12 @@ public class SignActivity extends Activity implements OnClickListener{
 
 
     private void initViews() {
+        setTAG();
         bt_camera = (Button)findViewById(R.id.bt_camera);
         bt_upload = (Button)findViewById(R.id.bt_upload);
         search = (EditText)findViewById(R.id.et_search);
         picture = findViewById(R.id.picture);
+        mTv = (TextView) findViewById(R.id.warning);
 
     }
     private void setupEvents() {
@@ -83,6 +91,7 @@ public class SignActivity extends Activity implements OnClickListener{
         bt_upload.setOnClickListener(this);
     }
     private void initData() {
+        checkNetWork();
         Intent intent = getIntent();
         plateNumber = (intent.getStringExtra("plateNumber")).toString();
         //System.out.println(plateNumber.trim().isEmpty());
@@ -251,7 +260,11 @@ public class SignActivity extends Activity implements OnClickListener{
 //        });
 //
         File file = tempFile;
-        OkHttpClient client = new OkHttpClient();
+        OkHttpClient client = new OkHttpClient.Builder()
+                .connectTimeout(20, TimeUnit.SECONDS)
+                .readTimeout(20,TimeUnit.SECONDS)
+                .addInterceptor(new RetryIntercepter(2,SignActivity.this))
+                .build();
         MultipartBody multipartBody = new MultipartBody.Builder()
                 .setType(MultipartBody.FORM)
                 .addFormDataPart("file", file.getName(),

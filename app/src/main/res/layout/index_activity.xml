@@ -3,17 +3,26 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/scrollView1"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content" >
+    android:layout_height="wrap_content"
+    android:focusableInTouchMode="true"
+    >
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:focusable="true"
-        android:focusableInTouchMode="true"
         android:orientation="vertical"
         android:gravity="top"
         >
-
+        <TextView
+            android:id="@+id/warning"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="#FEC7DE"
+            android:padding="10dp"
+            android:textColor="#000"
+            android:text="网络不给力,请检查网络设置。"
+            android:visibility="gone"/>
         <TextView xmlns:android="http://schemas.android.com/apk/res/android"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -156,32 +165,6 @@
                 android:text="逆反射数据读取"
                 android:textColor="@android:color/white"
                 android:textSize="@dimen/text_size_normal" />
-            <!--
-            <Button
-                android:id="@+id/b7"
-                android:layout_width="127dp"
-                android:layout_height="127dp"
-                android:layout_alignParentTop="true"
-                android:layout_alignStart="@+id/violation_button"
-                android:layout_marginTop="300dp"
-                android:background="@drawable/btn_orange_selector"
-                android:text="待添加"
-                android:textColor="@android:color/white"
-                android:textSize="@dimen/text_size_normal"
-                android:visibility="invisible" />
-
-            <Button
-                android:id="@+id/b8"
-                android:layout_width="165dp"
-                android:layout_height="165dp"
-                android:layout_alignParentEnd="true"
-                android:layout_alignTop="@+id/b7"
-                android:background="@drawable/btn_orange_selector"
-                android:text="待添加"
-                android:textColor="@android:color/white"
-                android:textSize="@dimen/text_size_normal"
-                android:visibility="invisible" />
-                -->
         </RelativeLayout>
 
         <Button

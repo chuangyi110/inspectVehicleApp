@@ -14,6 +14,7 @@ import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.alibaba.fastjson.JSON;
@@ -29,6 +30,7 @@ import com.bin.david.form.data.style.FontStyle;
 import com.bin.david.form.data.table.TableData;
 import com.bin.david.form.listener.OnColumnItemClickListener;
 import com.bin.david.form.utils.DensityUtils;
+import com.jshsoft.inspectvehicleapp.intercepter.RetryIntercepter;
 import com.jshsoft.inspectvehicleapp.moel.Item;
 import com.jshsoft.inspectvehicleapp.moel.ViolationInformationEntity;
 import com.jshsoft.inspectvehicleapp.util.LogUtil;
@@ -40,6 +42,7 @@ import java.net.ConnectException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import okhttp3.Call;
 import okhttp3.Callback;
@@ -53,12 +56,9 @@ import okhttp3.Response;
 /**
  *  历史查验记录
  */
-public class HistoricalActivity extends Activity implements View.OnClickListener{
-    private static final String TAG = "HistoricalActivity";
+public class HistoricalActivity extends BaseActivity implements View.OnClickListener{
     private Button more;
     private Button search_button;
-    private String historicalTime;
-    private LoadingDialog mLoadingDialog;
     private String plateNumber;
     private EditText search;
     private SmartTable<Item> table;
@@ -68,14 +68,15 @@ public class HistoricalActivity extends Activity implements View.OnClickListener
     Column<String> type;
     Column<String> particulars;
     List<String> name_selected = new ArrayList<String>();
-
+    public void setTAG(){
+        super.setTAG("HistoricalActivity");
+    }
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.historical_activity);
         initViews();
         setupEvents();
-
         initData();
         if(plateNumber!=null&&!plateNumber.trim().isEmpty()){
             getData();
@@ -83,10 +84,12 @@ public class HistoricalActivity extends Activity implements View.OnClickListener
     }
 
     private void initViews() {
+        setTAG();
         more = (Button) this.findViewById(R.id.more);
         search = (EditText) this.findViewById(R.id.et_search);
         search_button = (Button)findViewById(R.id.search_button);
         table = (SmartTable<Item>)findViewById(R.id.table);
+        mTv = (TextView) findViewById(R.id.warning);
 
     }
     private void setupEvents() {
@@ -94,18 +97,19 @@ public class HistoricalActivity extends Activity implements View.OnClickListener
         search_button.setOnClickListener(this);
     }
     private void initData(){
+        checkNetWork();
         Intent intent = getIntent();
         plateNumber = (intent.getStringExtra("plateNumber")).toString();
         boolean b  =plateNumber!=null&&!plateNumber.trim().isEmpty();
         if(b){
             search.setText(plateNumber);
         }else{
-            showToast("请输入要查询车牌号");
+            showToast(this,"请输入要查询车牌号");
         }
     }
     private void getData(){
         if(plateNumber.isEmpty()){
-            showToast("请输入要查询车牌号");
+            showToast(this,"请输入要查询车牌号");
             return;
         }
         showLoading();//显示加载框
@@ -114,7 +118,11 @@ public class HistoricalActivity extends Activity implements View.OnClickListener
             public void run() {
                 super.run();
                 setSearchBtnClickable(false);
-                OkHttpClient okHttpClient = new OkHttpClient();
+                OkHttpClient okHttpClient = new OkHttpClient.Builder()
+                        .connectTimeout(20, TimeUnit.SECONDS)
+                        .readTimeout(20,TimeUnit.SECONDS)
+                        .addInterceptor(new RetryIntercepter(2,HistoricalActivity.this))
+                        .build();
                 RequestBody requestBody = new FormBody.Builder()
                         .add("plateNumber", plateNumber)
                         .build();
@@ -127,9 +135,9 @@ public class HistoricalActivity extends Activity implements View.OnClickListener
                     @Override
                     public void onFailure(Call call, IOException e) {
                         if(e instanceof ConnectException){
-                            showToast("网络异常！请确认网络情况");
+                            showToast(HistoricalActivity.this,"网络异常！请确认网络情况");
                         }else{
-                            showToast(e.getMessage());
+                            showToast(HistoricalActivity.this,e.getMessage());
                         }
                         LogUtil.i(TAG,"++++++++++++++++++查询失败:错误原因"+e.getMessage()+"++++++++++++++++++");
                     }
@@ -150,7 +158,7 @@ public class HistoricalActivity extends Activity implements View.OnClickListener
                                 List<Item> list = JSON.parseArray(data,Item.class);
                                 processingData(list);
                             }else {
-                                showToast(map.get("msg").toString());
+                                showToast(HistoricalActivity.this,map.get("msg").toString());
                             }
                         }catch (Exception e){
                             e.printStackTrace();
@@ -293,22 +301,6 @@ public class HistoricalActivity extends Activity implements View.OnClickListener
             column.getDatas().set(position,true);
         }
     }
-    private void showLoading() {
-        if(mLoadingDialog ==null){
-            mLoadingDialog = new LoadingDialog(this,getString(R.string.loading),false);
-        }
-        mLoadingDialog.show();
-    }
-    private void hideLoding() {
-        if(mLoadingDialog!=null){
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    mLoadingDialog.hide();
-                }
-            });
-        }
-    }
     private String getPlateNumber(){
         String plateNumberSearch = search.getText().toString().trim();
         if(plateNumberSearch!="请输入要查询车牌号"&&plateNumberSearch!=null&&!plateNumberSearch.trim().isEmpty()) {
@@ -331,14 +323,6 @@ public class HistoricalActivity extends Activity implements View.OnClickListener
                 startActivity(new Intent(HistoricalActivity.this,HistoricalMenuPop.class));
                 break;
         }
-    }
-    private void showToast(final String message) {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                Toast.makeText(HistoricalActivity.this,message,Toast.LENGTH_SHORT).show();
-            }
-        });
     }
     /**
      * 按钮锁定
@@ -368,47 +352,6 @@ public class HistoricalActivity extends Activity implements View.OnClickListener
             }
         }else{
             finish();
-        }
-    }
-    /**
-     * 获取点击事件
-     */
-    @Override
-    public boolean dispatchTouchEvent(MotionEvent ev) {
-        if (ev.getAction() == MotionEvent.ACTION_DOWN) {
-            View view = getCurrentFocus();
-            if (isHideInput(view, ev)) {
-                HideSoftInput(view.getWindowToken());
-                view.clearFocus();
-            }
-        }
-        return super.dispatchTouchEvent(ev);
-    }
-
-    /**
-     * 判定是否需要隐藏
-     */
-    private boolean isHideInput(View v, MotionEvent ev) {
-        if (v != null && (v instanceof EditText)) {
-            int[] l = {0, 0};
-            v.getLocationInWindow(l);
-            int left = l[0], top = l[1], bottom = top + v.getHeight(), right = left + v.getWidth();
-            if (ev.getX() > left && ev.getX() < right && ev.getY() > top && ev.getY() < bottom) {
-                return false;
-            } else {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    /**
-     * 隐藏软键盘
-     */
-    private void HideSoftInput(IBinder token) {
-        if (token != null) {
-            InputMethodManager manager = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
-            manager.hideSoftInputFromWindow(token, InputMethodManager.HIDE_NOT_ALWAYS);
         }
     }
 

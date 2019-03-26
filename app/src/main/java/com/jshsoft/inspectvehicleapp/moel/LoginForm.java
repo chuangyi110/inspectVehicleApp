@@ -6,6 +6,13 @@ public class LoginForm {
     private String captcha;
     private String uuid;
 
+    public LoginForm(String username, String password, String captcha, String uuid) {
+        this.username = username;
+        this.password = password;
+        this.captcha = captcha;
+        this.uuid = uuid;
+    }
+
     public String getUsername() {
         return username;
     }

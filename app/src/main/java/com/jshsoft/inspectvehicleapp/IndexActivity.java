@@ -1,50 +1,51 @@
 package com.jshsoft.inspectvehicleapp;
 
-import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
-import android.os.IBinder;
 import android.support.annotation.Nullable;
-import android.util.Log;
-import android.view.MotionEvent;
 import android.view.View;
-import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.TextView;
 
 import com.jshsoft.inspectvehicleapp.util.LogUtil;
 import com.jshsoft.inspectvehicleapp.util.SharedPreferencesUtils;
-
-import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * 主页
  * 点击分项时自动传入当前Search的内容，无输入时传入Null,交由分项自行处理
  */
-public class IndexActivity extends Activity implements View.OnClickListener{
-    private static final String TAG = "IndexActivity";
+public class IndexActivity extends BaseActivity implements View.OnClickListener{
     private Button violationButton;
     private Button historicalButton;
     private Button signButton;
     private Button obdButton;
     private Button vehicleDataButton;
     private Button backReflectionButton;
-    private Button b7;
-    private Button b8;
     private EditText search;
     private String plateName;
     private String username;
-
+    public void setTAG(){
+        super.setTAG("IndexActivity");
+    }
+    @Override
+    protected void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.index_activity);
+        initViews();
+        setupEvents();
+        checkNetWork();
+    }
     private void initViews() {
+        setTAG();
         violationButton = (Button)findViewById(R.id.violation_button);
         historicalButton  = (Button)findViewById(R.id.historical_button);
         signButton = (Button)findViewById(R.id.sign_button);
         obdButton = (Button)findViewById(R.id.obd_button);
         vehicleDataButton = (Button)findViewById(R.id.vehicle_data_button);
         backReflectionButton = (Button)findViewById(R.id.back_reflection_button);
+        mTv = (TextView) findViewById(R.id.warning);
         //b7 = (Button) findViewById(R.id.b7);
         //b8 = (Button) findViewById(R.id.b8);
         search = (EditText)findViewById(R.id.et_search);
@@ -68,14 +69,6 @@ public class IndexActivity extends Activity implements View.OnClickListener{
 
         return plateName;
     }
-    @Override
-    protected void onCreate(@Nullable Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.index);
-        initViews();
-        setupEvents();
-    }
-
     private void startActivity(Context packageContext, Class<?> cls,String plateNumber){
         Intent intent = new Intent(packageContext,cls);
         intent.putExtra("plateNumber",plateNumber);
@@ -135,46 +128,4 @@ public class IndexActivity extends Activity implements View.OnClickListener{
         LogUtil.i(TAG,"[账号:"+username+"]"+"++++++++++++++++++进入主页面++++++++++++++++++");
 
     }
-    /**
-     * 获取点击事件
-     */
-    @Override
-    public boolean dispatchTouchEvent(MotionEvent ev) {
-        if (ev.getAction() == MotionEvent.ACTION_DOWN) {
-            View view = getCurrentFocus();
-            if (isHideInput(view, ev)) {
-                HideSoftInput(view.getWindowToken());
-                view.clearFocus();
-            }
-        }
-        return super.dispatchTouchEvent(ev);
-    }
-
-    /**
-     * 判定是否需要隐藏
-     */
-    private boolean isHideInput(View v, MotionEvent ev) {
-        if (v != null && (v instanceof EditText)) {
-            int[] l = {0, 0};
-            v.getLocationInWindow(l);
-            int left = l[0], top = l[1], bottom = top + v.getHeight(), right = left + v.getWidth();
-            if (ev.getX() > left && ev.getX() < right && ev.getY() > top && ev.getY() < bottom) {
-                return false;
-            } else {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    /**
-     * 隐藏软键盘
-     */
-    private void HideSoftInput(IBinder token) {
-        if (token != null) {
-            InputMethodManager manager = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
-            manager.hideSoftInputFromWindow(token, InputMethodManager.HIDE_NOT_ALWAYS);
-        }
-    }
-
 }
