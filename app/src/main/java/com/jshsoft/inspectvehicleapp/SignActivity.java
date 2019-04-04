@@ -33,10 +33,18 @@ import com.jshsoft.inspectvehicleapp.widget.LoadingDialog;
 import java.io.File;
 import java.io.IOException;
 import java.net.ConnectException;
+import java.security.cert.CertificateException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSession;
+import javax.net.ssl.SSLSocketFactory;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
 
 import okhttp3.Call;
 import okhttp3.Callback;
@@ -57,6 +65,8 @@ public class SignActivity extends BaseActivity implements OnClickListener{
     private ImageView picture;
     private Button bt_camera,bt_upload;
     private String plateNumber;
+    private String username;
+    private String userId;
     public static File tempFile;
     private Uri imageUri;
     private EditText search;
@@ -94,6 +104,8 @@ public class SignActivity extends BaseActivity implements OnClickListener{
         checkNetWork();
         Intent intent = getIntent();
         plateNumber = (intent.getStringExtra("plateNumber")).toString();
+        username = intent.getStringExtra("username");
+        userId = intent.getStringExtra("userId");
         //System.out.println(plateNumber.trim().isEmpty());
         boolean b  =plateNumber!=null&&!plateNumber.trim().isEmpty();
         if(b){
@@ -260,18 +272,20 @@ public class SignActivity extends BaseActivity implements OnClickListener{
 //        });
 //
         File file = tempFile;
-        OkHttpClient client = new OkHttpClient.Builder()
-                .connectTimeout(20, TimeUnit.SECONDS)
-                .readTimeout(20,TimeUnit.SECONDS)
-                .addInterceptor(new RetryIntercepter(2,SignActivity.this))
-                .build();
+//        OkHttpClient client = new OkHttpClient.Builder()
+//                .connectTimeout(20, TimeUnit.SECONDS)
+//                .readTimeout(20,TimeUnit.SECONDS)
+//                .build();
+        OkHttpClient client = getUnsafeOkHttpClient();
         MultipartBody multipartBody = new MultipartBody.Builder()
                 .setType(MultipartBody.FORM)
                 .addFormDataPart("file", file.getName(),
                         RequestBody.create(MediaType.parse("application/octet-stream"), file))
+                .addFormDataPart("userId",userId)
+                .addFormDataPart("username",username)
                 .build();
         Request request = new Request.Builder()
-                .url("https://vehicle.jshsoft.com:8080/f/"+plateNumber)
+                .url("https://172.16.0.101:8080/f/"+plateNumber)
                 .post(multipartBody)
                 .build();
         client.newCall(request).enqueue(new Callback() {
@@ -288,10 +302,55 @@ public class SignActivity extends BaseActivity implements OnClickListener{
             public void onResponse(Call call, Response response) throws IOException {
                 String req = response.body().string();
                 Map map = (Map) JSONObject.parse(req);
-                LogUtil.i(TAG, "++++++++++++++++++上传成功" + map.get("msg") + "++++++++++++++++++");
-                showToast(map.get("msg").toString());
+                System.out.println(map);
+                if(Integer.parseInt(map.get("code").toString())==0){
+                    LogUtil.i(TAG, "++++++++++++++++++上传成功"+ "++++++++++++++++++");
+                }else {
+
+                }
 
             }
         });
     }
+    private static OkHttpClient getUnsafeOkHttpClient() {
+        try {
+            // Create a trust manager that does not validate certificate chains
+            final TrustManager[] trustAllCerts = new TrustManager[]{
+                    new X509TrustManager() {
+                        @Override
+                        public void checkClientTrusted(java.security.cert.X509Certificate[] chain, String authType) throws CertificateException {
+                        }
+
+                        @Override
+                        public void checkServerTrusted(java.security.cert.X509Certificate[] chain, String authType) throws CertificateException {
+                        }
+
+                        @Override
+                        public java.security.cert.X509Certificate[] getAcceptedIssuers() {
+                            return new java.security.cert.X509Certificate[]{};
+                        }
+                    }
+            };
+
+            // Install the all-trusting trust manager
+            final SSLContext sslContext = SSLContext.getInstance("SSL");
+            sslContext.init(null, trustAllCerts, new java.security.SecureRandom());
+            // Create an ssl socket factory with our all-trusting manager
+            final SSLSocketFactory sslSocketFactory = sslContext.getSocketFactory();
+
+            OkHttpClient.Builder builder = new OkHttpClient.Builder();
+            builder.sslSocketFactory(sslSocketFactory);
+            builder.hostnameVerifier(new HostnameVerifier() {
+                @Override
+                public boolean verify(String hostname, SSLSession session) {
+                    return true;
+                }
+            });
+            OkHttpClient okHttpClient = builder.build();
+            return okHttpClient;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
 }

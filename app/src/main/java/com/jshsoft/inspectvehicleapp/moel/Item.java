@@ -1,5 +1,8 @@
 package com.jshsoft.inspectvehicleapp.moel;
 
+/**
+ * SmartTable 专用类，标签眉
+ */
 public class Item {
     private String id;
     private String project;

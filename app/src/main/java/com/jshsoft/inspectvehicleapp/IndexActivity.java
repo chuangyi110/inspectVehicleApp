@@ -26,6 +26,7 @@ public class IndexActivity extends BaseActivity implements View.OnClickListener{
     private EditText search;
     private String plateName;
     private String username;
+    private String userId;
     public void setTAG(){
         super.setTAG("IndexActivity");
     }
@@ -51,6 +52,8 @@ public class IndexActivity extends BaseActivity implements View.OnClickListener{
         search = (EditText)findViewById(R.id.et_search);
         Intent i = getIntent();
         username = i.getStringExtra("username");
+        userId = i.getStringExtra("userId");
+        System.out.println(TAG+"####"+username+"###"+userId);
     }
     private void setupEvents(){
         violationButton.setOnClickListener(this);
@@ -92,7 +95,10 @@ public class IndexActivity extends BaseActivity implements View.OnClickListener{
                 break;
             case R.id.sign_button:
                 LogUtil.i(TAG,"[账号:"+username+"]"+"++++++++++++++++++跳转签名保存页面++++++++++++++++++");
-                startActivity(IndexActivity.this,SignActivity.class,getSearch());
+                startActivity(new Intent(IndexActivity.this, SignActivity.class)
+                        .putExtra("username",username)
+                        .putExtra("userId",userId)
+                        .putExtra("plateNumber",getSearch()));
                 break;
             case R.id.obd_button:
                 LogUtil.i(TAG,"[账号:"+username+"]"+"++++++++++++++++++跳转OBD页面++++++++++++++++++");

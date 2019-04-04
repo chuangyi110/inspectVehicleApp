@@ -27,7 +27,7 @@ import android.widget.Toast;
 import com.jshsoft.inspectvehicleapp.receiver.HomeWatcherReceiver;
 
 
-
+import com.jshsoft.inspectvehicleapp.timer.CountTimer;
 import com.jshsoft.inspectvehicleapp.widget.LoadingDialog;
 
 import java.io.IOException;
@@ -46,21 +46,34 @@ public class BaseActivity extends Activity{
     LoadingDialog mLoadingDialog;
     public TextView mTv;
     public Button mLoginBtn;
+    private CountTimer countTimer;
 
     public void setTAG(String TAG) {
         this.TAG = TAG;
     }
+    private void timeStart(){
+        new Handler(getMainLooper()).post(new Runnable() {
+            @Override
+            public void run() {
+                countTimer.start();
+            }
+        });
+    }
+
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
+        countTimer = new CountTimer(10*1000,1000,BaseActivity.this);
     }
+
+
     //
     @Override
     protected void onResume() {
         super.onResume();
         registerHomeKeyReceiver(this);
         handler.post(runnable);
+        timeStart();
     }
 
     @Override
@@ -68,6 +81,7 @@ public class BaseActivity extends Activity{
         unregisterHomeKeyReceiver(this);
         super.onPause();
         handler.removeCallbacks(runnable);
+        countTimer.cancel();
 
     }
 
@@ -118,13 +132,28 @@ public class BaseActivity extends Activity{
      */
     @Override
     public boolean dispatchTouchEvent(MotionEvent ev) {
-        if (ev.getAction() == MotionEvent.ACTION_DOWN) {
-            View view = getCurrentFocus();
-            if (isHideInput(view, ev)) {
-                HideSoftInput(view.getWindowToken());
-                view.clearFocus();
-            }
+//        if (ev.getAction() == MotionEvent.ACTION_DOWN) {
+//            View view = getCurrentFocus();
+//            if (isHideInput(view, ev)) {
+//                HideSoftInput(view.getWindowToken());
+//                view.clearFocus();
+//            }
+//        }
+        switch (ev.getAction()){
+            case MotionEvent.ACTION_UP:
+                countTimer.start();
+                break;
+            case MotionEvent.ACTION_DOWN:
+                View view = getCurrentFocus();
+                if (isHideInput(view,ev)){
+                    HideSoftInput(view.getWindowToken());
+                    view.clearFocus();
+                }
+            default:
+                countTimer.cancel();
+                break;
         }
+
         return super.dispatchTouchEvent(ev);
     }
     /**

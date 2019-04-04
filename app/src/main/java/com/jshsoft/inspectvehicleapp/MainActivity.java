@@ -26,9 +26,11 @@ import android.widget.Toast;
 
 
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.jshsoft.inspectvehicleapp.intercepter.RetryIntercepter;
 import com.jshsoft.inspectvehicleapp.moel.LoginForm;
+import com.jshsoft.inspectvehicleapp.moel.UserEntity;
 import com.jshsoft.inspectvehicleapp.util.APKVersionCodeUtils;
 import com.jshsoft.inspectvehicleapp.util.AppManager;
 import com.jshsoft.inspectvehicleapp.util.LogUtil;
@@ -40,6 +42,7 @@ import java.io.IOException;
 import java.net.ConnectException;
 
 
+import java.util.List;
 import java.util.Map;
 
 import java.util.concurrent.TimeUnit;
@@ -141,6 +144,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener,C
                             LogUtil.i(TAG,"++++++++++++++++++版本验证成功++++++++++++++++++");
                         }else {
                             String msg = map.get("msg")==null?"连接失败":map.get("msg").toString();
+                            mLoginBtn.setText("版本错误禁止登陆");
                             showToast(MainActivity.this,msg);
                             setLoginBtnClickable(false);
                             LogUtil.i(TAG,"+++++++++++++++版本验证失败__失败原因:"+msg+"+++++++++++++");
@@ -302,8 +306,11 @@ public class MainActivity extends BaseActivity implements View.OnClickListener,C
                         try{
                             Map map = (Map)JSONObject.parse(req);
                             if(Integer.parseInt(map.get("code").toString())==0){
+                                UserEntity user = JSONObject.parseObject(map.get("user").toString(),UserEntity.class);
                                 LogUtil.i(TAG,"[账号:"+username+"]"+"++++++++++++++++++验证成功++++++++++++++++++");
-                                startActivity(new Intent(MainActivity.this, IndexActivity.class).putExtra("username",username));
+                                startActivity(new Intent(MainActivity.this, IndexActivity.class)
+                                                .putExtra("username",username)
+                                                .putExtra("userId",user.getId().toString()));
                                 //finish();//关闭页面
                             }else {
                                 String msg = map.get("msg").toString();
@@ -313,7 +320,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener,C
                                 i++;
                                 if(i<=10){
                                     helper.putValues(new SharedPreferencesUtils.ContextValue("loginTime",i));
-                                    showToast(MainActivity.this,"登录错误"+i+"次");
+                                    showToast(MainActivity.this,"登录错误"+i+"次，错误原因+"+msg);
                                 }else {
                                     setLoginBtnClickable(false);
                                     showToast(MainActivity.this,"登录异常锁定账号");
@@ -321,7 +328,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener,C
                                 }
                             }
                         }catch (Exception e){
-
+                            e.printStackTrace();
                         }
                     }
                 });
@@ -559,8 +566,9 @@ public class MainActivity extends BaseActivity implements View.OnClickListener,C
                         String req = response.body().string();
                         try {
                             Map map = (Map) JSONObject.parse(req);
+                            System.out.println(map);
                             if (Integer.parseInt(map.get("code").toString()) == 0) {
-                                LogUtil.i(TAG, "++++++++++++++++++用户验证成功++++++++++++++++++");
+                                LogUtil.i(TAG, "++++++++++++++++++用户锁定++++++++++++++++++");
                             } else {
                                 String msg = map.get("msg").toString();
                                 LogUtil.i(TAG, "+++++++++++++++用户锁定失败__失败原因:" + msg + "+++++++++++++");
