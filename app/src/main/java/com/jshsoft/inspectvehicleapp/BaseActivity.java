@@ -81,7 +81,7 @@ public class BaseActivity extends Activity{
         unregisterHomeKeyReceiver(this);
         super.onPause();
         handler.removeCallbacks(runnable);
-        countTimer.cancel();
+        //countTimer.cancel();
 
     }
 

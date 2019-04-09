@@ -1,6 +1,6 @@
 package com.jshsoft.inspectvehicleapp.moel;
 
-import java.io.ByteArrayOutputStream;
+
 import java.io.Serializable;
 public class UserEntity implements Serializable {
     private Integer id;
